@@ -1,0 +1,104 @@
+// schema.prisma
+// Projeto: Controle de Trabalhos da Faculdade (multiusuário)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // URL era aqui
+}
+
+enum AssignmentStatus {
+  TODO
+  DOING
+  DONE
+}
+
+enum AssignmentPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model User {
+  id           String     @id @default(uuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  timezone     String     @default("America/Sao_Paulo")
+  isActive     Boolean    @default(true)
+
+  subjects     Subject[]
+  assignments  Assignment[]
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Subject {
+  id        String      @id @default(uuid())
+  userId    String
+  name      String
+  code      String?
+  color     String?
+  semester  String?
+
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments Assignment[]
+
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([userId])
+  @@unique([userId, name]) // evita matérias duplicadas por usuário
+}
+
+model Assignment {
+  id               String            @id @default(uuid())
+  userId           String
+  subjectId        String
+
+  title            String
+  description      String?
+
+  dueDate          DateTime
+  status           AssignmentStatus  @default(TODO)
+  priority         AssignmentPriority @default(MEDIUM)
+
+  estimatedMinutes Int?
+  deliveredAt      DateTime?
+
+  attachmentsLink  String?
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject          Subject           @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  checklistItems   ChecklistItem[]
+
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([subjectId])
+  @@index([dueDate])
+  @@index([userId, status])
+  @@index([userId, priority])
+}
+
+model ChecklistItem {
+  id           String     @id @default(uuid())
+  assignmentId String
+  title        String
+  isDone       Boolean    @default(false)
+  orderIndex   Int        @default(0)
+  doneAt       DateTime?
+
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([assignmentId])
+  @@index([assignmentId, orderIndex])
+}
