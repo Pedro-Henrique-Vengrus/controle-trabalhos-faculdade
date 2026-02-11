@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: trabalhos123
       POSTGRES_DB: trabalhos
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - trabalhos_pgdata:/var/lib/postgresql/data
 
